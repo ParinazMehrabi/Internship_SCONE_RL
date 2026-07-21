@@ -8,7 +8,6 @@ The core difference between **Reinforcement Learning (RL)** and other learning p
 
 ### Key Concept: The Need for Exploration
 Because RL relies on evaluative feedback, the agent must actively **explore** different behaviors to find the one that yields the highest reward.
-
 ### Scope of Chapter 2: Nonassociative Setting
 In this chapter, we study RL in a simplified **nonassociative** setting (the k-armed bandit problem). In this setting:
 *   There is only one situation/state.

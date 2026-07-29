@@ -205,35 +205,6 @@ Monte Carlo waits for the final outcome, while TD learns online from intermediat
 
 This makes TD faster and more efficient in changing environments.
 
-
-
-## Exercises
-
-### Exercise 6.1
-
-When value estimates are updated during an episode, the identity
-
-$$
-G_t-V(S_t)
-=
-\sum_{k=t}^{T-1}\gamma^{k-t}\delta_k
-$$
-
-is no longer exact. The exercise asks to derive the correction term caused by changing value estimates.
-
----
-
-### Exercise 6.2
-
-TD is often more efficient because it reuses previously learned value estimates.
-
-Example:
-
-- Only the beginning of the driving route changes.
-- Most later state values are already accurate.
-- TD immediately bootstraps from these estimates.
-- Monte Carlo must still wait for the complete return.
-
 ---
 
 ## Comparison
@@ -310,31 +281,6 @@ Although online TD and MC do not reach their exact batch solutions, they general
 
 Understanding these batch solutions helps explain the fundamental difference between TD and Monte Carlo learning.
 
-# Example 6.3 – Random Walk under Batch Updating
-
-## Experimental Setup
-
-- Batch TD(0) and Batch Constant-\(\alpha\) Monte Carlo were applied to the Random Walk task.
-- After each new episode, **all episodes observed so far** formed the training batch.
-- The same batch was repeatedly processed until convergence.
-
----
-
-## Evaluation
-
-The learned value function was compared with the true value function using:
-
-- Root Mean Square (RMS) Error
-- Averaged over the five states
-- Averaged over 100 independent runs
-
----
-
-## Results
-
-- Batch TD consistently achieved lower RMS error than Batch Monte Carlo.
-- TD produced better predictions despite Monte Carlo minimizing training-set error.
-
 ---
 
 ## Monte Carlo Solution
@@ -351,7 +297,6 @@ TD learns the underlying Markov structure through bootstrapping.
 
 Although Monte Carlo is optimal for the observed data, TD produces estimates that generalize better to future experience.
 
-# 6.3 Optimality of TD(0) 
 
 ## Batch Monte Carlo
 

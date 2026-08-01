@@ -59,8 +59,6 @@ def get_activation_cost(m):
 def simulate(params, store_data=False, tag=None):
     model.reset()
     model.set_store_data(store_data)
-
-    # تنظیم پارامترهای کنترلر
     for name, value in zip(CONTROL_PARAMS, params):
         model.set_control_parameter(name, float(value))
 

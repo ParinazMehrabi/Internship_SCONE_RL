@@ -6,7 +6,9 @@ from knee_cost import KneeSimilarityCost
 MODEL_FILE = "data/H0918_hfd.scone"
 MAX_TIME = 3.0
 W_KNEE = 1.0
-W_EFFORT = 0.05
+W_COT = 0.5
+
+GRAVITY = 9.80665
 
 cost_fn = KneeSimilarityCost("knee_reference_gait_cycle.csv")
 model = sconepy.load_model(MODEL_FILE)
@@ -14,6 +16,26 @@ model = sconepy.load_model(MODEL_FILE)
 knee_dofs = {d.name(): d for d in model.dofs() if "knee" in d.name().lower()}
 knee_r_name = next((n for n in knee_dofs if n.endswith("_r") or "right" in n), None)
 knee_l_name = next((n for n in knee_dofs if n.endswith("_l") or "left" in n), None)
+
+
+def body_weight_newtons(m):
+    return sum(b.mass() for b in m.bodies()) * GRAVITY
+
+
+def get_metabolic_rate(m):
+    for attr in ("metabolic_energy_rate", "energy_expenditure_rate", "metabolic_power"):
+        if hasattr(m, attr):
+            try:
+                return float(getattr(m, attr)())
+            except Exception:
+                pass
+    total = 0.0
+    for mus, act in zip(m.muscles(), m.muscle_activation_array()):
+        try:
+            total += float(act) * mus.max_isometric_force()
+        except Exception:
+            pass
+    return total
 
 
 def simulate(params, random_seed=1, store_data=False, tag=None):
@@ -35,10 +57,13 @@ def simulate(params, random_seed=1, store_data=False, tag=None):
 
     model.init_state_from_dofs()
 
+    com_x0 = model.com_pos().x
+    bw = body_weight_newtons(model)
+
     time_log = []
     knee_r_log = []
     knee_l_log = []
-    act_sq_log = []
+    metab_rate_log = []
 
     for t in np.arange(0, MAX_TIME, 0.01):
         mus_in = k_force * model.muscle_force_array()
@@ -54,7 +79,7 @@ def simulate(params, random_seed=1, store_data=False, tag=None):
         knee_r_log.append(np.degrees(dof_pos.get(knee_r_name, np.nan)))
         knee_l_log.append(np.degrees(dof_pos.get(knee_l_name, np.nan)))
 
-        act_sq_log.append(np.mean(model.muscle_activation_array() ** 2))
+        metab_rate_log.append(get_metabolic_rate(model))
 
         if model.com_pos().y < 0.3:
             break
@@ -69,19 +94,25 @@ def simulate(params, random_seed=1, store_data=False, tag=None):
     kl = np.array(knee_l_log)
 
     knee_result = cost_fn.evaluate(t_arr, kr, kl)
-    effort = float(np.mean(act_sq_log)) if act_sq_log else 10.0
-    fell = model.com_pos().y < 0.3
 
-    return knee_result, effort, fell, (t_arr, kr, kl)
+    distance = abs(model.com_pos().x - com_x0)
+    total_metabolic_energy = float(np.trapz(metab_rate_log, t_arr)) if len(t_arr) > 1 else 0.0
+    cost_of_walking = total_metabolic_energy / (bw * max(distance, 1e-3))
+
+    fell = model.com_pos().y < 0.3
+    if fell:
+        cost_of_walking += 10.0
+
+    return knee_result, cost_of_walking, fell, (t_arr, kr, kl)
 
 
 def weighted_objective(params):
-    knee_result, effort, fell, _ = simulate(params)
+    knee_result, cost_of_walking, fell, _ = simulate(params)
     fall_penalty = 50.0 if fell else 0.0
 
     return (
         W_KNEE * knee_result["total"]
-        + W_EFFORT * effort
+        + W_COT * cost_of_walking
         + fall_penalty
     )
 
@@ -146,7 +177,7 @@ def main():
         index=False,
     )
 
-    knee_result, effort, fell, (t, kr, kl) = simulate(
+    knee_result, cost_of_walking, fell, (t, kr, kl) = simulate(
         best_x,
         store_data=True,
         tag="best",
@@ -154,7 +185,7 @@ def main():
 
     print("Final result:")
     print("Knee similarity:", knee_result)
-    print("Effort:", effort)
+    print("Cost of walking:", cost_of_walking)
     print("Fall detected:", fell)
 
     pd.DataFrame(
@@ -175,7 +206,7 @@ def main():
                 "len_offset": best_x[1],
                 "k_vel": best_x[2],
                 **knee_result,
-                "effort": effort,
+                "cost_of_walking": cost_of_walking,
             }
         ]
     ).to_csv(

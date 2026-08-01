@@ -1,0 +1,19 @@
+ModelOpenSim4 {
+
+    model_file = H0918v3.osim
+
+    state_init_file = InitStateH0918Gait10ActA.zml
+
+    initial_load = 1
+
+    fixed_control_step_size = 0.005
+
+    initial_equilibration_activation = 0.05
+
+    << neural_delays_FEA_v4.zml >>
+
+    CompositeController {
+        << H0918RS2v3.scone >>
+    }
+
+}

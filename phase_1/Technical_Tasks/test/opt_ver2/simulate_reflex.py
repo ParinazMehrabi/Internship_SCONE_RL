@@ -8,6 +8,7 @@ MAX_TIME = 4.0
 FALL_HEIGHT = 0.35
 FALL_PENALTY = 150.0
 GRAVITY = 9.80665
+
 CONTROL_PARAMS = [
     "S00011.vasti.KL",
     "S00011.vasti.KF",
@@ -24,7 +25,7 @@ BOUNDS = [
     (0.0, 3.0),    # vasti.KF
     (0.2, 3.0),    # soleus.KL
     (-2.0, 3.0),   # soleus.KF
-    (0.3, 4.0),    # iliopsoas.KL (swing)
+    (0.3, 4.0),    # iliopsoas.KL
     (0.2, 3.0),    # hamstrings.KL
     (0.0, 4.0),    # hamstrings-pelvis KP
     (0.0, 4.0),    # iliopsoas-pelvis KP
@@ -56,9 +57,10 @@ def get_activation_cost(m):
 
 
 def simulate(params, store_data=False, tag=None):
-    ""
     model.reset()
-    model.set_store_data(store_d
+    model.set_store_data(store_data)
+
+    # تنظیم پارامترهای کنترلر
     for name, value in zip(CONTROL_PARAMS, params):
         model.set_control_parameter(name, float(value))
 
@@ -67,10 +69,13 @@ def simulate(params, store_data=False, tag=None):
     com_x0 = model.com_pos().x
     bw = body_weight(model)
 
-    time_log, knee_r_log, knee_l_log, act_log = [], [], [], []
+    time_log = []
+    knee_r_log = []
+    knee_l_log = []
+    act_log = []
 
     for t in np.arange(0, MAX_TIME + 1e-9, 0.01):
-        model.advance_simulation_to(t)  
+        model.advance_simulation_to(t)
 
         time_log.append(model.time())
         dof_pos = {d.name(): d.pos() for d in model.dofs()}
@@ -100,6 +105,6 @@ def simulate(params, store_data=False, tag=None):
         cost_of_walking += 20.0
         knee_result["rmse_r"] += FALL_PENALTY
         knee_result["rmse_l"] += FALL_PENALTY
-        knee_result["total"]  += FALL_PENALTY
+        knee_result["total"] += FALL_PENALTY
 
     return knee_result, cost_of_walking, fell, (t_arr, kr, kl)

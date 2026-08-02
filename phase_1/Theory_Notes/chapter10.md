@@ -437,3 +437,577 @@ R_1+\gamma R_2+\cdots+\gamma^{n-1}R_n+\gamma^n\hat q
 $$
 
 ---
+
+# 10.3 Average Reward for Continuing Tasks
+
+## Three RL Settings
+
+1. Episodic
+2. Discounted
+3. Average Reward
+
+Average Reward is designed for continuing tasks.
+
+No discount factor is used.
+
+the discounted setting is problematic with function approximation, and thus the average-reward setting is needed to replace it.
+
+---
+
+# Average Reward
+
+$$
+r(\pi)
+=
+\lim_{h\to\infty}
+\frac1h
+E
+\left[
+\sum_{t=1}^{h}R_t
+\right]
+$$
+
+It represents the long-term average reward per time step.
+
+---
+
+# Differential Return
+
+Instead of
+
+$$
+R+\gamma R+\gamma^2R+\cdots
+$$
+
+use
+
+$$
+(R_1-r(\pi))
++
+(R_2-r(\pi))
++\cdots
+$$
+
+---
+
+# Differential Value Functions
+
+State value:
+
+$$
+v_\pi(s)
+=
+E[G_t|S_t=s]
+$$
+
+Action value:
+
+$$
+q_\pi(s,a)
+=
+E[G_t|S_t=s,A_t=a]
+$$
+
+---
+
+# Bellman Equation
+
+$$
+v_\pi(s)
+=
+\sum_a
+\pi(a|s)
+\sum_{r,s'}
+p(s',r|s,a)
+\left[
+r-r(\pi)+v_\pi(s')
+\right]
+$$
+
+---
+
+# Differential TD Error
+
+State value:
+
+$$
+\delta
+=
+R
+-
+\bar R
++
+\hat V(S')
+-
+\hat V(S)
+$$
+
+Action value:
+
+$$
+\delta
+=
+R
+-
+\bar R
++
+\hat q(S',A')
+-
+\hat q(S,A)
+$$
+
+---
+
+# Semi-gradient Sarsa Update
+
+$$
+w
+\leftarrow
+w
++
+\alpha
+\delta
+\nabla
+\hat q(S,A,w)
+$$
+
+---
+
+# Differential Semi-gradient Sarsa algo
+
+## Goal
+
+Estimate
+
+$$
+\hat q \approx q^*
+$$
+
+for continuing tasks using Average Reward.
+
+---
+
+# Inputs
+
+Action-value approximation:
+
+$$
+\hat q:\mathcal S\times\mathcal A\times\mathbb R^d\rightarrow\mathbb R
+$$
+
+Learning rates:
+
+$$
+\alpha>0
+$$
+
+$$
+\beta>0
+$$
+
+Exploration:
+
+$$
+\epsilon>0
+$$
+
+---
+
+# Initialize
+
+Weights:
+
+$$
+w=0
+$$
+
+Average reward estimate:
+
+$$
+\bar R=0
+$$
+
+---
+
+# Differential TD Error
+
+$$
+\delta
+=
+R
+-
+\bar R
++
+\hat q(S',A',w)
+-
+\hat q(S,A,w)
+$$
+
+---
+
+# Average Reward Update
+
+$$
+\bar R
+\leftarrow
+\bar R
++
+\beta
+\delta
+$$
+
+---
+
+# Weight Update
+
+$$
+w
+\leftarrow
+w
++
+\alpha
+\delta
+\nabla
+\hat q(S,A,w)
+$$
+
+---
+
+# State Update
+
+$$
+S\leftarrow S'
+$$
+
+$$
+A\leftarrow A'
+$$
+
+---
+
+# Difference from Standard Sarsa
+
+Standard Sarsa:
+
+$$
+\delta
+=
+R
++
+\gamma Q'
+-
+Q
+$$
+
+Differential Sarsa:
+
+$$
+\delta
+=
+R
+-
+\bar R
++
+Q'
+-
+Q
+$$
+
+---
+
+
+# Example 10.2: Access-Control Queuing Task
+
+A server system receives requests continuously.
+
+Each request has a priority:
+
+$$
+1,\;2,\;4,\;8
+$$
+
+The agent decides whether to:
+
+- Accept
+- Reject
+
+---
+
+# State
+
+$$
+S=(\text{Free Servers},\text{Priority})
+$$
+
+---
+
+# Actions
+
+- Accept
+- Reject
+
+---
+
+# Reward
+
+Accept:
+
+$$
+R=\text{Priority}
+$$
+
+Reject:
+
+$$
+R=0
+$$
+
+---
+
+# Continuing Task
+
+- No terminal state
+- No episodes
+- Runs forever
+
+Therefore Average Reward is used.
+
+---
+
+# Objective
+
+Maximize
+
+$$
+r(\pi)
+$$
+
+the long-term average reward.
+
+---
+
+# Learning
+
+Differential TD Error:
+
+$$
+\delta
+=
+R
+-
+\bar R
++
+\hat q(S',A')
+-
+\hat q(S,A)
+$$
+
+Average reward update:
+
+$$
+\bar R
+\leftarrow
+\bar R+\beta\delta
+$$
+
+Weight update:
+
+$$
+w
+\leftarrow
+w+\alpha\delta\nabla\hat q(S,A,w)
+$$
+
+---
+
+# 10.4 Deprecating the Discounted Setting
+
+For continuing tasks with function approximation,
+discounting is no longer a meaningful problem formulation.
+
+---
+
+# Average Discounted Objective
+
+Define
+
+$$
+J(\pi)
+=
+\sum_s
+\mu_\pi(s)
+v_\pi^\gamma(s)
+$$
+
+Using the Bellman equation,
+
+$$
+J(\pi)
+=
+r(\pi)
++
+\gamma J(\pi)
+$$
+
+Therefore,
+
+$$
+J(\pi)
+=
+\frac{r(\pi)}
+{1-\gamma}
+$$
+
+---
+
+# Result
+
+The average discounted objective orders policies exactly the same as the average-reward objective.
+
+The value of
+
+$$
+\gamma
+$$
+
+does **not** change the ranking of policies.
+
+---
+
+# Interpretation
+
+Discounting becomes a parameter of the solution method,
+not the problem definition.
+
+---
+
+# Why Discounting Fails with Function Approximation
+
+Function approximation loses the
+
+**Policy Improvement Theorem**.
+
+Improving the estimated value of one state
+does **not** guarantee improvement of the overall policy.
+
+---
+
+# Consequences
+
+- No theoretical guarantee for ε-greedy improvement.
+- Policies may oscillate (Policy Chattering).
+- Policy Gradient methods (Chapter 13) provide a new guarantee through the Policy Gradient Theorem.
+
+---
+
+
+# 10.5 Differential Semi-gradient n-step Sarsa
+
+Combine
+
+- n-step bootstrapping
+
+with
+
+- Average Reward learning.
+
+---
+
+# Differential n-step Return
+
+$$
+G_{t:t+n}
+=
+\sum_{i=t+1}^{t+n}
+(R_i-\bar R)
++
+\hat q(S_{t+n},A_{t+n},w)
+$$
+
+If
+
+$$
+t+n\ge T
+$$
+
+use the full return.
+
+---
+
+# TD Error
+
+$$
+\delta
+=
+G_{t:t+n}
+-
+\hat q(S_t,A_t,w)
+$$
+
+---
+
+# Average Reward Update
+
+$$
+\bar R
+\leftarrow
+\bar R
++
+\beta
+\delta
+$$
+
+---
+
+# Weight Update
+
+$$
+w
+\leftarrow
+w
++
+\alpha
+\delta
+\nabla
+\hat q(S_t,A_t,w)
+$$
+
+---
+
+# Special Cases
+
+$$
+n=1
+$$
+
+↓
+
+Differential Semi-gradient Sarsa
+
+---
+
+$$
+n\rightarrow\infty
+$$
+
+↓
+
+Differential Monte Carlo
+
+---
+
+# Why Use n-step?
+
+Small n:
+
+- High Bias
+- Low Variance
+
+Large n:
+
+- Low Bias
+- High Variance
+
+Intermediate values usually give the best performance.
+
+---
